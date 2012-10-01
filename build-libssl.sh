@@ -80,7 +80,8 @@ do
 	mkdir -p "${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk"
 	LOG="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk/build-openssl-${VERSION}.log"
 
-	./Configure iphoneos-cross --openssldir="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk" > "${LOG}" 2>&1
+    # $@ passes commandline arguments (e.g. -g to enable debugging) from this script to configure
+    ./Configure $@ iphoneos-cross --openssldir="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk" > "${LOG}" 2>&1
 	# add -isysroot to CC=
 	sed -ie "s!^CFLAG=!CFLAG=-isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} !" "Makefile"
 
@@ -97,6 +98,11 @@ lipo -create ${CURRENTPATH}/bin/iPhoneSimulator${SDKVERSION}-i386.sdk/lib/libcry
 mkdir -p ${CURRENTPATH}/include
 cp -R ${CURRENTPATH}/bin/iPhoneSimulator${SDKVERSION}-i386.sdk/include/openssl ${CURRENTPATH}/include/
 echo "Building done."
-echo "Cleaning up..."
-rm -rf ${CURRENTPATH}/src/openssl-${VERSION}
+# Do not clean up if the debug flag is set
+# Otherwise it is not possible to step through the code
+if [ `echo $* | grep -c -e '-g'` -eq 0 ];
+then
+    echo "Cleaning up..."
+    rm -rf ${CURRENTPATH}/src/openssl-${VERSION}
+fi
 echo "Done."
